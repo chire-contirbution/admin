@@ -1,0 +1,29 @@
+{
+  "name": "admin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "watchify source/index.js -p [ urify-emitter -l 100 -o public/browser -b public/browser ] --it urify -p [ browserify-livereload --host 127.0.0.1 --port 1337 ] -o public/browser/bundle.js",
+    "www": "ecstatic ./ -p 5000 -H 'Access-Control-Allow-Origin: *'",
+    "start": "npm run watch & npm run www",
+    "build": "browserify -p [ urify-emitter -l 100 -o public/browser -b public/browser ] --it urify source/index.js > public/browser/bundle.js",
+    "open": "opn http://0.0.0.0:5000/ -- 'google chrome'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workingamigos/admin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/workingamigos/admin/issues"
+  },
+  "homepage": "https://github.com/workingamigos/admin#readme",
+  "dependencies": {
+    "csjs-inject": "^1.0.1",
+    "minixhr": "^3.1.0",
+    "yo-yo": "^1.4.0"
+  }
+}
