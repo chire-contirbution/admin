@@ -38,16 +38,14 @@ var urls = [
   'https://scraping-a5a55.firebaseio.com/workingnomads@co@@remote-javascript-jobs.json'
 ]
 
-var url = urls[0]
-
 /* ----------------------------------------------------------------------------
       START PAGE
 ---------------------------------------------------------------------------- */
-minixhr(url, startPage)
+minixhr(urls[0], startPage)
 
 function startPage(data) {
   var parsedData = getData(data)
-  var html = template(parsedData)
+  var html = template(parsedData, urls)
   document.body.appendChild(html)
 }
 
@@ -105,63 +103,102 @@ var css = csjs`
   }
 `
 
-function template(data){
+function template(data,urls){
 	return yo`
   <div>
     <div class='${css.container}'>
       <div class='${css.buttons}'>
-        <select class='${css.button}'>
-          ${showButton()}
+        <select class='${css.button}' onchange=${event=>getUrl(event,urls)}>
+          ${selectOptions()}
         </select>
       </div>
     </div>
     <div class='${css.table}'>
-    	${displayRaws(data)}
+      ${displayRows(data)}
     </div>
   </div>
   `
 }
 
-function showButton () {
-  var buttons = []
-  urls.forEach(function (url) {
-    var URL = get.url(url).slice(0,20)
-    buttons.push(
-      yo`
-        <option value="${URL}">${URL}</option>
-      `
-    )
-  })
-  return buttons
-}
-function displayRaws (data) {
+function displayRows (data) {
   var jobs = []
-	data.forEach (function (job) {
+  data.forEach (function (job) {
     jobs.push(yo`
-    	<div class='${css.raw}'>
+      <div class='${css.table}'>
+        <div class='${css.raw}'>
+          <div class='${css.rawTitle}'>
+            ${job[0]}
+          </div>
+          <div class='${css.rawText}'>
+            ${job[1]}<br>
+            ${job[2]}<br>
+            ${job[3]}<br>
+            ${job[4]}<br>
+            ${job[5]}<br>
+            ${job[6]}<br>
+          </div>
+        </div>
+      </div>
+      `)
+    })
+    return jobs
+}
+
+function getUrl (e,urls) {
+  var i = e.target.value
+  minixhr(urls[i], showJobs)
+}
+
+function showJobs (data) {
+  var data = getData(data)
+
+  var jobs = []
+  data.forEach (function (job) {
+    jobs.push(yo`
+      <div class='${css.raw}'>
         <div class='${css.rawTitle}'>
           ${job[0]}
         </div>
         <div class='${css.rawText}'>
           ${job[1]}<br>
-    			${job[2]}<br>
-    			${job[3]}<br>
+          ${job[2]}<br>
+          ${job[3]}<br>
           ${job[4]}<br>
           ${job[5]}<br>
           ${job[6]}<br>
         </div>
       </div>
-    `)
-  })
-  return jobs
+      `)
+    })
+    var newEl = yo`
+      <div class='${css.table}'>
+        ${jobs}
+      </div>
+    `
+    var el = document.querySelector(`.${css.table}`)
+    yo.update(el,newEl)
 }
 
+function selectOptions () {
+  var buttons = []
+  urls.forEach(function (url, index) {
+    var URL = get.url(url).slice(0,20)
+    buttons.push(
+      yo`
+      <option value='${index}'>${URL}</option>
+      `
+    )
+  })
+  //console.log(buttons)
+  return buttons
+}
 function getData (data) {
     var data = JSON.parse(data)
     var key = Object.keys(data)[0]
     var array = data[key]
     var data = []
     array.forEach(function (obj){
+      console.log(obj)
       data.push(obj.raw)
     })
     return data
