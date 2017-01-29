@@ -124,21 +124,14 @@ function displayRows (data) {
   var jobs = []
   data.forEach (function (job) {
     jobs.push(yo`
-      <div class='${css.table}'>
         <div class='${css.raw}'>
           <div class='${css.rawTitle}'>
             ${job[0]}
           </div>
           <div class='${css.rawText}'>
-            ${job[1]}<br>
-            ${job[2]}<br>
-            ${job[3]}<br>
-            ${job[4]}<br>
-            ${job[5]}<br>
-            ${job[6]}<br>
+            ${job[1,100]}<br>
           </div>
         </div>
-      </div>
       `)
     })
     return jobs
@@ -151,7 +144,6 @@ function getUrl (e,urls) {
 
 function showJobs (data) {
   var data = getData(data)
-
   var jobs = []
   data.forEach (function (job) {
     jobs.push(yo`
@@ -198,8 +190,7 @@ function getData (data) {
     var array = data[key]
     var data = []
     array.forEach(function (obj){
-      console.log(obj)
-      data.push(obj.raw)
+      if (obj) { data.push(obj.raw) }
     })
     return data
 }
