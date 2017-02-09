@@ -18,16 +18,21 @@ var white = '#fafafa'
       DATABASE URLS
 ---------------------------------------------------------------------------- */
 var urls = [
+  'https://scraping-a5a55.firebaseio.com/frontenddeveloperjob@com.json',
+  'https://scraping-a5a55.firebaseio.com/jsjobs@org@@!__!q=remote&p=1.json',
+  'https://scraping-a5a55.firebaseio.com/freelancermap@com.json',
   'https://scraping-a5a55.firebaseio.com/authenticjobs@com@@!_!onlyremote=1.json',
-  'https://scraping-a5a55.firebaseio.com/bountysource@com.json',
+  // 'https://scraping-a5a55.firebaseio.com/simplyhired@com@@search?q=remote!___!web!___!developer&fdb=30.json',
+  'https://scraping-a5a55.firebaseio.com/peopleperhour@com@@freelance-javascript-jobs!__!locationFilter=remote.json',
+  //'https://scraping-a5a55.firebaseio.com/bountysource@com.json',  //SCRAPED - but no matching DATA
+  //'https://scraping-a5a55.firebaseio.com/hnhiring@me.json',
+  // 'https://scraping-a5a55.firebaseio.com/cwjobs@co@uk@@jobs@@remote-javascript.json',
   'https://scraping-a5a55.firebaseio.com/careerbuilder@com@@jobs-javascript-remote.json',
   'https://scraping-a5a55.firebaseio.com/freelancer@com@@jobs@@Javascript@@1.json',
-  'https://scraping-a5a55.firebaseio.com/frontenddeveloperjob@com.json',
   'https://scraping-a5a55.firebaseio.com/jobmote@com@@jobs@@search!__!q=javascript.json',
   'https://scraping-a5a55.firebaseio.com/jobs@github@com@@positions!__!description=JavaScript.json',
   'https://scraping-a5a55.firebaseio.com/jobs@remotive@io@@!__!category=engineering.json',
   'https://scraping-a5a55.firebaseio.com/jobs@smashingmagazine@com@@freelance.json',
-  'https://scraping-a5a55.firebaseio.com/jsjobs@org@@!__!q=remote&p=1.json',
   'https://scraping-a5a55.firebaseio.com/news@ycombinator@com@@item!__!id=13301833.json',
   'https://scraping-a5a55.firebaseio.com/reddit@com@@r@@javascript_jobs.json',
   'https://scraping-a5a55.firebaseio.com/reddit@com@@r@@remotejs.json',
@@ -35,6 +40,7 @@ var urls = [
   'https://scraping-a5a55.firebaseio.com/remoteok@io@@remote-jobs.json',
   'https://scraping-a5a55.firebaseio.com/remoteworkhub@com@@results@@!__!category=software-application-development&type=&location=anywhere-worldwide.json',
   'https://scraping-a5a55.firebaseio.com/wfh@io@@categories@@1-remote-software-development@@jobs.json',
+  'https://scraping-a5a55.firebaseio.com/weworkremotely@com@@categories@@2-programming@@jobs!_!intro.json',
   'https://scraping-a5a55.firebaseio.com/workingnomads@co@@remote-javascript-jobs.json'
 ]
 
@@ -45,6 +51,7 @@ minixhr(urls[0], startPage)
 
 function startPage(data) {
   var parsedData = getData(data)
+  var count = parsedData.length
   var html = template(parsedData, urls)
   document.body.appendChild(html)
 }
@@ -55,13 +62,14 @@ var css = csjs`
   }
   .container {
     background-color: ${white};
-    padding: 10px 0 10 0;
+    padding: 10px 0;
     margin: 20px 0 20px 0;
     border: 1px solid #b8b8b8;
     border-radius: 4px;
     box-shadow: 1px 1px 1px rgba(255,255,255,.8);
   }
   .buttons {
+    margin-left: 5%;
     line-height: 20px;
     color: ${darkGrey};
     display: flex;
@@ -82,6 +90,7 @@ var css = csjs`
     background-color: ${lightGrey};
   }
   .table {
+    padding: 0 5%;
     background-color: ${white};
     border: 1px solid ${grey};
     box-shadow: 0 0 4px rgba(0,0,0,.15);
@@ -90,13 +99,14 @@ var css = csjs`
     color: ${darkGrey};
   }
   .raw {
-    padding: 10px 8px;
+    padding: 50px 8px;
     vertical-align: middle;
     border-bottom: 1px solid ${lightGrey};
   }
   .rawTitle {
     color: ${titleColor};
     font-weight: bold;
+    font-size: 16px;
   }
   .rawText {
     color: ${textColor};
@@ -121,42 +131,86 @@ function template(data,urls){
 }
 
 function displayRows (data) {
+  console.log(data.length)
   var jobs = []
   data.forEach (function (job) {
+    var keys = Object.keys(job)
     jobs.push(yo`
         <div class='${css.raw}'>
           <div class='${css.rawTitle}'>
-            ${job.shift()}
+            ${job.title}
           </div>
-          <div class='${css.rawText}'>
-            ${job.map(j=>yo`<div>${j}</div>`)}
-          </div>
+            ${displayJob(job,keys)}
         </div>
       `)
     })
     return jobs
+    function displayJob (job,keys) {
+      var body = []
+      keys.forEach(function (category){
+        if (category != 'title') {
+          body.push(yo`
+            <div>
+            <br>
+            ${category.toUpperCase()}
+            <br>
+            ${job[category]}
+            <br>
+            </div>
+            `)
+        }
+
+      })
+      //console.log(body)
+      return yo `
+        <div class='${css.rawText}'>
+          ${body}
+        </div>
+      `
+    }
 }
 
 function getUrl (e,urls) {
   var i = e.target.value
+  console.log(urls)
   minixhr(urls[i], showJobs)
 }
 
 function showJobs (data) {
   var data = getData(data)
+  var count = data.length
   var jobs = []
   data.forEach (function (job) {
+    var keys = Object.keys(job)
     jobs.push(yo`
       <div class='${css.raw}'>
         <div class='${css.rawTitle}'>
-          ${job.shift()}
+          ${job.title}
         </div>
-        <div class='${css.rawText}'>
-          ${job.map(j=>yo`<div>${j}</div>`)}
-        </div>
+          ${displayJob(job,keys)}
       </div>
       `)
     })
+    function displayJob (job,keys) {
+      var body = []
+      keys.forEach(function (category){
+        body.push(yo`
+            <div>
+              <br>
+              ${category.toUpperCase()}
+              <br>
+              ${job[category]}
+              <br>
+            </div>
+          `)
+      })
+      //console.log(body)
+      return yo `
+        <div class='${css.rawText}'>
+          ${body}
+        </div>
+      `
+    }
     var newEl = yo`
       <div class='${css.table}'>
         ${jobs}
@@ -172,7 +226,7 @@ function selectOptions () {
     var URL = get.url(url).slice(0,20)
     buttons.push(
       yo`
-      <option value='${index}'>${URL}</option>
+      <option value='${index}'>${URL} </option>
       `
     )
   })
@@ -185,7 +239,7 @@ function getData (data) {
     var array = data[key]
     var data = []
     array.forEach(function (obj){
-      if (obj) { data.push(obj.raw) }
+      if (obj) { data.push(obj.item) }
     })
     return data
 }
