@@ -22,7 +22,7 @@ var urls = [
   'https://scraping-a5a55.firebaseio.com/jsjobs@org@@!__!q=remote&p=1.json',
   'https://scraping-a5a55.firebaseio.com/freelancermap@com.json',
   'https://scraping-a5a55.firebaseio.com/authenticjobs@com@@!_!onlyremote=1.json',
-  // 'https://scraping-a5a55.firebaseio.com/simplyhired@com@@search?q=remote!___!web!___!developer&fdb=30.json',
+  'https://scraping-a5a55.firebaseio.com/simplyhired@com@@search?q=remote!___!web!___!developer&fdb=30.json',
   'https://scraping-a5a55.firebaseio.com/peopleperhour@com@@freelance-javascript-jobs!__!locationFilter=remote.json',
   //'https://scraping-a5a55.firebaseio.com/bountysource@com.json',  //SCRAPED - but no matching DATA
   //'https://scraping-a5a55.firebaseio.com/hnhiring@me.json',
@@ -60,10 +60,18 @@ var css = csjs`
   body {
     background-color: ${lightGrey};
   }
+  .header {
+    padding: 2%;
+    margin-left: 3%;
+    align-self: display-end;
+    color: ${titleColor};
+    font-weight: bold;
+    font-size: 36px;
+  }
   .container {
     background-color: ${white};
     padding: 10px 0;
-    margin: 20px 0 20px 0;
+    margin: 20px 0;
     border: 1px solid #b8b8b8;
     border-radius: 4px;
     box-shadow: 1px 1px 1px rgba(255,255,255,.8);
@@ -72,9 +80,6 @@ var css = csjs`
     margin-left: 5%;
     line-height: 20px;
     color: ${darkGrey};
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
   }
   .button {
     font-size: 14px;
@@ -116,6 +121,9 @@ var css = csjs`
 function template(data,urls){
 	return yo`
   <div>
+    <div class='${css.header}'>
+    Remote JS jobs for WorkingAmigos
+    </div>
     <div class='${css.container}'>
       <div class='${css.buttons}'>
         <select class='${css.button}' onchange=${event=>getUrl(event,urls)}>
