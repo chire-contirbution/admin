@@ -24,6 +24,16 @@
   "dependencies": {
     "csjs-inject": "^1.0.1",
     "minixhr": "^3.1.0",
+    "nlp-ngram": "0.0.3",
+    "nlp_compromise": "^6.5.3",
     "yo-yo": "^1.4.0"
+  },
+  "devDependencies": {
+    "browserify": "^14.1.0",
+    "browserify-livereload": "^1.0.9",
+    "ecstatic": "^2.1.0",
+    "opn-cli": "^3.1.0",
+    "urify-emitter": "^1.1.2",
+    "watchify": "^3.9.0"
   }
 }

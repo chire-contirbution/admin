@@ -5,6 +5,11 @@ var yo = require('yo-yo')
 var csjs = require('csjs-inject')
 var minixhr = require('minixhr')
 var get = require('_get')
+
+var nlp = require('nlp_compromise');
+var nlpNgram = require('ngram-nlp');
+nlp.plugin(nlpNgram);
+
 /* ----------------------------------------------------------------------------
       COLORS
 ---------------------------------------------------------------------------- */
@@ -22,7 +27,7 @@ var urls = [
   'https://scraping-a5a55.firebaseio.com/jsjobs@org@@!__!q=remote&p=1.json',
   'https://scraping-a5a55.firebaseio.com/freelancermap@com.json',
   'https://scraping-a5a55.firebaseio.com/authenticjobs@com@@!_!onlyremote=1.json',
-  'https://scraping-a5a55.firebaseio.com/simplyhired@com@@search?q=remote!___!web!___!developer&fdb=30.json',
+  //'https://scraping-a5a55.firebaseio.com/simplyhired@com@@search?q=remote!___!web!___!developer&fdb=30.json',
   'https://scraping-a5a55.firebaseio.com/peopleperhour@com@@freelance-javascript-jobs!__!locationFilter=remote.json',
   //'https://scraping-a5a55.firebaseio.com/bountysource@com.json',  //SCRAPED - but no matching DATA
   //'https://scraping-a5a55.firebaseio.com/hnhiring@me.json',
@@ -47,14 +52,24 @@ var urls = [
 /* ----------------------------------------------------------------------------
       START PAGE
 ---------------------------------------------------------------------------- */
-minixhr(urls[0], startPage)
+var allData = []
+for (var i=0, len=urls.length; i<len; i++) { minixhr(urls[i], nextCall) }
+function nextCall (data) {
+  allData.push(data)
+  startPage()
+}
 
-function startPage(data) {
-  var parsedData = getData(data)
-  var count = parsedData.length
-  var html = template(parsedData, urls)
+function startPage () {
+  if (allData.length !== urls.length) return
+  var data = []
+  allData.forEach(function(dataSet){
+    var parsed = getData(dataSet)
+    data.push(parsed)
+  })
+  var html = template(data, urls)
   document.body.appendChild(html)
 }
+
 
 var css = csjs`
   body {
@@ -132,55 +147,35 @@ function template(data,urls){
       </div>
     </div>
     <div class='${css.table}'>
-      ${displayRows(data)}
+      ${displayStats(data)}
     </div>
   </div>
   `
 }
 
-function displayRows (data) {
-  console.log(data.length)
-  var jobs = []
-  data.forEach (function (job) {
-    var keys = Object.keys(job)
-    jobs.push(yo`
-        <div class='${css.raw}'>
-          <div class='${css.rawTitle}'>
-            ${job.title}
-          </div>
-            ${displayJob(job,keys)}
-        </div>
-      `)
+function displayStats (allPlatforms) {
+  var platformsCount
+  var jobTitles = []
+  allPlatforms.forEach(function (onePlatform){
+    platformsCount =  yo`<div>${onePlatform.length}</div>`
+    onePlatform.forEach(function (jobPost){
+      jobTitles.push(jobTitle =  yo`<div><a href=${jobPost.url||''}>${jobPost.title||'Title missing'}<br></a></div>`)
     })
-    return jobs
-    function displayJob (job,keys) {
-      var body = []
-      keys.forEach(function (category){
-        if (category != 'title') {
-          body.push(yo`
-            <div>
-            <br>
-            ${category.toUpperCase()}
-            <br>
-            ${job[category]}
-            <br>
-            </div>
-            `)
-        }
-
-      })
-      //console.log(body)
-      return yo `
-        <div class='${css.rawText}'>
-          ${body}
-        </div>
-      `
-    }
+  })
+  allPlatforms = yo`<div>${allPlatforms}</div>`
+  return yo`
+  <div>
+    Number of platforms analysed: ${allPlatforms.length}
+    <br><br>
+    All jobs: ${platformsCount}
+    <br><br>
+    ${jobTitles}
+  </div>
+  `
 }
 
 function getUrl (e,urls) {
   var i = e.target.value
-  console.log(urls)
   minixhr(urls[i], showJobs)
 }
 
@@ -202,16 +197,45 @@ function showJobs (data) {
     function displayJob (job,keys) {
       var body = []
       keys.forEach(function (category){
+        //console.log(category)
         body.push(yo`
             <div>
               <br>
-              ${category.toUpperCase()}
+                ${category.toUpperCase()}
               <br>
-              ${job[category]}
+                ${displayCategories(category)}
               <br>
             </div>
           `)
       })
+      function displayCategories (category) {
+        if (category === 'description') {
+          var analysis = analyzeJobs(job[category])
+          var rightStack = analysis.rightStack.map(x=>yo`<span>${x.toUpperCase()} </span>`)
+          var wrongStack = analysis.wrongStack.map(x=>yo`<span>${x.toUpperCase()} </span>`)
+          return yo`
+            <div>
+              <p>
+              Stack (+):<br>
+              ${rightStack.length ? rightStack : '/'}
+              </p>
+              <p>
+              Stack (-):<br>
+              ${wrongStack.length ? wrongStack : '/'}
+              </p>
+              <p>
+              ${job[category]}
+              </p>
+            </div>
+          `
+        } else {
+          return yo`
+            <div>
+              ${job[category]}
+            </div>
+          `
+        }
+      }
       //console.log(body)
       return yo `
         <div class='${css.rawText}'>
@@ -241,6 +265,7 @@ function selectOptions () {
   //console.log(buttons)
   return buttons
 }
+
 function getData (data) {
     var data = JSON.parse(data)
     var key = Object.keys(data)[0]
@@ -250,4 +275,55 @@ function getData (data) {
       if (obj) { data.push(obj.item) }
     })
     return data
+}
+
+function analyzeJobs (text){
+  var t = nlp.text(text);
+  var allWords = t.ngram({max_size:2})
+
+  var rightStack = [];
+  for (var i=0;i<allWords[0].length;i++) {
+    var result = allWords[0][i]
+    if (result.word === 'js') { rightStack.push(result.word) }
+    if (result.word === 'npm') { rightStack.push(result.word) }
+    if (result.word === 'browserify') { rightStack.push(result.word) }
+    if (result.word === 'remote') { rightStack.push(result.word) }
+    if (result.word === 'javascript') { rightStack.push(result.word) }
+    if (result.word === 'java script') { rightStack.push(result.word) }
+    if (result.word === 'cordova') { rightStack.push(result.word) }
+    if (result.word === 'phonegap') { rightStack.push(result.word) }
+    if (result.word === 'electron') { rightStack.push(result.word) }
+    if (result.word === 'css') { rightStack.push(result.word) }
+    if (result.word === 'front end') { rightStack.push(result.word) }
+    if (result.word === 'frontend') { rightStack.push(result.word) }
+    if (result.word === 'mobile') { rightStack.push(result.word) }
+    if (result.word === 'html') { rightStack.push(result.word) }
+    if (result.word === 'svg') { rightStack.push(result.word) }
+  }
+
+  var wrongStack = [];
+  for (var i=0;i<allWords[0].length;i++) {
+    var result = allWords[0][i]
+    if (result.word === 'php') { wrongStack.push(result.word) }
+    if (result.word === 'jquery') { wrongStack.push(result.word) }
+    if (result.word === 'django') { wrongStack.push(result.word) }
+    if (result.word === 'python') { wrongStack.push(result.word) }
+    if (result.word === 'ruby') { wrongStack.push(result.word) }
+    if (result.word === 'rails') { wrongStack.push(result.word) }
+    if (result.word === 'java') { wrongStack.push(result.word) }
+    if (result.word === 'rust') { wrongStack.push(result.word) }
+    if (result.word === 'clojure') { wrongStack.push(result.word) }
+    if (result.word === 'elm') { wrongStack.push(result.word) }
+    if (result.word === 'coffeescript') { wrongStack.push(result.word) }
+    if (result.word === 'wordpress') { wrongStack.push(result.word) }
+    if (result.word === 'netsuite') { wrongStack.push(result.word) }
+    if (result.word === 'drupal') { wrongStack.push(result.word) }
+    if (result.word === 'yoomla') { wrongStack.push(result.word) }
+    if (result.word === 'ionic') { wrongStack.push(result.word) }
+    if (result.word === 'angular') { wrongStack.push(result.word) }
+    if (result.word === 'ember') { wrongStack.push(result.word) }
+    if (result.word === 'react') { wrongStack.push(result.word) }
+    if (result.word === 'xamarin') { wrongStack.push(result.word) }
+  }
+  return {rightStack, wrongStack}
 }
